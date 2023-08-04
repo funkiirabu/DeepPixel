@@ -2,7 +2,7 @@ import torch
 from PIL import Image
 from torchvision import transforms
 import numpy as np
-from models.networks import define_G
+from networks import define_G
 
 class PixelArtGenerator:
     def __init__(self, checkpoint_path, input_nc=3, output_nc=3, ngf=64, netG='resnet_9blocks', norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
@@ -26,10 +26,9 @@ class PixelArtGenerator:
         self.generator.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
         self.generator.eval()  # Set to evaluation mode
 
-    def transform_image(self, input_image):
-        # Convert input_image to a format suitable for the generator
-        # Note: no need to open the image from a file path since it's already a PIL.Image object
-        image = input_image.convert('RGB')
+    def transform_image(self, image_path, output_path):
+        # Load and transform the input image
+        image = Image.open(image_path)
         transform = transforms.Compose([
             transforms.Resize((256, 256)),
             transforms.ToTensor(),
@@ -44,5 +43,11 @@ class PixelArtGenerator:
         # Transform the output tensor to a numpy array
         transformed_image_array = ((transformed_image_tensor.squeeze().cpu().numpy() + 1) / 2 * 255).astype(np.uint8).transpose(1, 2, 0)
         transformed_image = Image.fromarray(transformed_image_array)
+
+        # # Resize the transformed image to 500x500
+        # transformed_image_resized = transformed_image.resize((500, 500))
+
+        # Save the resized transformed image
+        transformed_image.save(output_path)
 
         return transformed_image
